@@ -120,7 +120,7 @@ if (($progressCheck -eq "Incomplete") -or ($progressCheck -eq "Failed")) {
         # Test/Create RG
         if (-not (Get-AzResourceGroup -Name $azsImagesRGName -Location $azsLocation -ErrorAction SilentlyContinue)) {
             Write-Host "Creating the resource group: $azsImagesRGName"
-            New-AzResourceGroup -Name $azsImagesRGName -Location $azsLocation -Force -Confirm:$false -ErrorAction Stop 
+            New-AzResourceGroup -Name $azsImagesRGName -Location $azsLocation -Force -ErrorAction Stop 
         }
         # Test/Create Storage
         $azsStorageAccount = Get-AzStorageAccount -Name $azsImagesStorageAccountName -ResourceGroupName $azsImagesRGName -ErrorAction SilentlyContinue

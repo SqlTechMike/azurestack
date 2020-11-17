@@ -174,7 +174,7 @@ elseif (($skipRP -eq $false) -and ($progressCheck -ne "Complete")) {
                 # Need to 100% confirm that the ServerCoreImage is ready as it seems that starting the MySQL/SQL RP deployment immediately is causing an issue
                 Write-Host "Need to confirm that the Windows Server 2016 Core image is available in the gallery and ready"
                 $azsPlatformImageExists = (Get-AzsPlatformImage -Location $azsLocation -Publisher "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Server-Core" -ErrorAction SilentlyContinue).ProvisioningState -eq 'Succeeded'
-                $azureRmVmPlatformImageExists = (Get-AzVMImage -Location $azsLocation -Publisher "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Server-Core" -ErrorAction SilentlyContinue).StatusCode -eq 'OK'
+                $azureRmVmPlatformImageExists = (Get-AzVMImage -Location $azsLocation -Offer "WindowsServer" -ErrorAction SilentlyContinue).StatusCode -eq 'OK'
                 Write-Host "Check #1 - Using Get-AzsPlatformImage to check for Windows Server 2016 Core image"
                 if ($azsPlatformImageExists) {
                     Write-Host "Get-AzsPlatformImage, successfully located an appropriate image with the following details:"
@@ -189,7 +189,7 @@ elseif (($skipRP -eq $false) -and ($progressCheck -ne "Complete")) {
                     Write-Host "Using Get-AzureRmVMImage, successfully located an appropriate image with the following details:"
                     Write-Host "Publisher: MicrosoftWindowsServer | Offer: WindowsServer | Sku: 2016-Datacenter-Server-Core"
                 }
-                While (!$(Get-AzVMImage -Location $azsLocation -Publisher "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Server-Core" -ErrorAction SilentlyContinue).StatusCode -eq 'OK') {
+                While (!$(Get-AzVMImage -Location $azsLocation -Offer "WindowsServer" -ErrorAction SilentlyContinue).StatusCode -eq 'OK') {
                     Write-Host "Using Get-AzureRmVMImage to test, ServerCoreImage is not ready yet. Delaying by 20 seconds"
                     Start-Sleep -Seconds 20
                 }

@@ -557,7 +557,7 @@ elseif ((!$skip2019Images) -and ($progressCheck -ne "Complete")) {
                 Start-Sleep -Seconds $delay
 
                 # Test/Create RG
-                if (-not (Get-AzResourceGroup -Name $azsImagesRGName -Location $azsLocation -ErrorAction SilentlyContinue)) { New-AzResourceGroup -Name $azsImagesRGName -Location $azsLocation -Force -Confirm:$false -ErrorAction Stop }
+                if (-not (Get-AzResourceGroup -Name $azsImagesRGName -Location $azsLocation -ErrorAction SilentlyContinue)) { New-AzResourceGroup -Name $azsImagesRGName -Location $azsLocation -Force -ErrorAction Stop }
                 # Test/Create Storage
                 $azsStorageAccount = Get-AzStorageAccount -Name $azsImagesStorageAccountName -ResourceGroupName $azsImagesRGName -ErrorAction SilentlyContinue
                 if (-not ($azsStorageAccount)) { $azsStorageAccount = New-AzStorageAccount -Name $azsImagesStorageAccountName -Location $azsLocation -ResourceGroupName $azsImagesRGName -SkuName Standard_LRS -ErrorAction Stop }

@@ -110,7 +110,7 @@ elseif ((($deploymentMode -eq "PartialOnline") -or ($deploymentMode -eq "Offline
         # Create Resource Group
         if (-not (Get-AzResourceGroup -Name $azsOfflineRGName -Location $azsLocation -ErrorAction SilentlyContinue)) {
             Write-Host "Creating resource group for storing scripts"
-            New-AzResourceGroup -Name $azsOfflineRGName -Location $azsLocation -Force -Confirm:$false -ErrorAction Stop
+            New-AzResourceGroup -Name $azsOfflineRGName -Location $azsLocation -Force -ErrorAction Stop
         }
         # Test/Create Storage
         $azsOfflineStorageAccount = Get-AzStorageAccount -Name $azsOfflineStorageAccountName -ResourceGroupName $azsOfflineRGName -ErrorAction SilentlyContinue
