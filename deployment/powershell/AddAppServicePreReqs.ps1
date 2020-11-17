@@ -408,7 +408,7 @@ elseif (($skipAppService -eq $false) -and ($progressCheck -ne "Complete")) {
                 # Test/Create RG
                 if (-not (Get-AzResourceGroup -Name $azsExtensionRGName -Location $azsLocation -ErrorAction SilentlyContinue)) {
                     Write-Host "Creating the resource group: $azsExtensionRGName"
-                    New-AzResourceGroup -Name $azsExtensionRGName -Location $azsLocation -Force -Confirm:$false -ErrorAction Stop 
+                    New-AzResourceGroup -Name $azsExtensionRGName -Location $azsLocation -Force -ErrorAction Stop 
                 }
                 # Test/Create Storage
                 $azsStorageAccount = Get-AzStorageAccount -Name $azsExtensionStorageAccountName -ResourceGroupName $azsExtensionRGName -ErrorAction SilentlyContinue
