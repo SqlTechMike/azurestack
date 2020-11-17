@@ -2031,7 +2031,7 @@ try {
     # Register an AzureRM environment that targets your administrative Azure Stack instance
     Write-CustomVerbose -Message "Azure Stack POC Configurator will now test all logins"
     $ArmEndpoint = "https://adminmanagement.$customDomainSuffix"
-    Add-AzEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop -Verbose:$false | Out-Null
+    Add-AzEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop | Out-Null
     $ADauth = (Get-AzEnvironment -Name "AzureStackAdmin").ActiveDirectoryAuthority.TrimEnd('/')
 
     if ($authenticationType.ToString() -like "AzureAd") {
@@ -2039,7 +2039,7 @@ try {
             ### TEST AZURE LOGIN - Login to Azure Cloud
             Write-CustomVerbose -Message "Testing Azure login with Azure Active Directory`r"
             $tenantId = (Invoke-RestMethod -Verbose:$false "$($ADauth)/$($azureDirectoryTenantName)/.well-known/openid-configuration").issuer.TrimEnd('/').Split('/')[-1]
-            Add-AzAccount -Environment $azureEnvironment -Tenant $tenantId -Credential $azsCreds -ErrorAction Stop -Verbose:$false | Out-Null
+            Add-AzAccount -Environment $azureEnvironment -Tenant $tenantId -Credential $azsCreds -ErrorAction Stop | Out-Null
             Write-CustomVerbose -Message "Current Azure Subscription information:"
             Get-AzContext | Format-Table -AutoSize
             Start-Sleep -Seconds 5
@@ -2047,8 +2047,8 @@ try {
             ### TEST AZURE STACK LOGIN - Login to Azure Stack
             Write-CustomVerbose -Message "Testing Azure Stack login with Azure Active Directory"
             Write-CustomVerbose -Message "Logging into the Default Provider Subscription with your Azure Stack Administrator Account used with Azure Active Directory"
-            Add-AzEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop -Verbose:$false | Out-Null
-            Add-AzAccount -Environment "AzureStackAdmin" -Tenant $tenantID -Subscription "Default Provider Subscription" -Credential $azsCreds -ErrorAction Stop -Verbose:$false | Out-Null
+            Add-AzEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop | Out-Null
+            Add-AzAccount -Environment "AzureStackAdmin" -Tenant $tenantID -Subscription "Default Provider Subscription" -Credential $azsCreds -ErrorAction Stop | Out-Null
             $sub = Get-AzSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
             $azureContext = Get-AzSubscription -SubscriptionID $sub.SubscriptionId | Select-AzSubscription
             Write-CustomVerbose -Message "Current Azure Stack Subscription information:"
@@ -2078,8 +2078,8 @@ try {
             Write-CustomVerbose -Message "Getting Tenant ID for Login to Azure Stack"
             $tenantId = (invoke-restmethod -Verbose:$false "$($ADauth)/.well-known/openid-configuration").issuer.TrimEnd('/').Split('/')[-1]
             Write-CustomVerbose -Message "Logging in with your Azure Stack Administrator Account used with ADFS"
-            Add-AzEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop -Verbose:$false | Out-Null
-            Add-AzAccount -Environment "AzureStackAdmin" -Tenant $tenantID -Subscription "Default Provider Subscription" -Credential $azsCreds -ErrorAction Stop -Verbose:$false | Out-Null
+            Add-AzEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop | Out-Null
+            Add-AzAccount -Environment "AzureStackAdmin" -Tenant $tenantID -Subscription "Default Provider Subscription" -Credential $azsCreds -ErrorAction Stop | Out-Null
             $sub = Get-AzSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
             $azureContext = Get-AzSubscription -SubscriptionID $sub.SubscriptionId | Select-AzSubscription
             Write-CustomVerbose -Message "Current Azure Stack Subscription information:"
@@ -2095,8 +2095,8 @@ try {
         try {
             ### OPTIONAL - TEST AZURE REGISTRATION CREDS
             Write-CustomVerbose -Message "Testing Azure login for registration with Azure Active Directory"
-            Add-AzAccount -Environment $azureEnvironment -Subscription $azureRegSubId -Credential $azureRegCreds -ErrorAction Stop -Verbose:$false | Out-Null
-            $azureRegTenantID = (Get-AzSubscription -SubscriptionId $azureRegSubId -Verbose:$false).TenantId
+            Add-AzAccount -Environment $azureEnvironment -Subscription $azureRegSubId -Credential $azureRegCreds -ErrorAction Stop | Out-Null
+            $azureRegTenantID = (Get-AzSubscription -SubscriptionId $azureRegSubId).TenantId
             Write-CustomVerbose -Message "Selected Azure Subscription used for registration info:"
             Get-AzContext | Format-Table -AutoSize
             Write-CustomVerbose -Message "TenantID for this registration subscription is: $azureRegTenantID"
@@ -2621,7 +2621,7 @@ C:\AzSPoC\AzSPoC.ps1, you should find the Scripts folder located at C:\AzSPoC\Sc
 
             # Create the Plan and Private Offer
             if (-not (Get-AzResourceGroup -Name $RGName -Location $azsLocation -ErrorAction SilentlyContinue)) {
-                New-AzResourceGroup -Name $RGName -Location $azsLocation -Force -Confirm:$false -ErrorAction Stop
+                New-AzResourceGroup -Name $RGName -Location $azsLocation -Force -ErrorAction Stop
             }
             
             $plan = New-AzsPlan -Name $PlanName -DisplayName $PlanName -Location $azsLocation -ResourceGroupName $RGName -QuotaIds $QuotaIDs
@@ -3229,7 +3229,7 @@ C:\AzSPoC\AzSPoC.ps1, you should find the Scripts folder located at C:\AzSPoC\Sc
                 $quotaIDs += $appServiceQuotaId
             }
             # Create the Plan and Offer
-            New-AzResourceGroup -Name $RGName -Location $azsLocation -Force -Confirm:$false
+            New-AzResourceGroup -Name $RGName -Location $azsLocation -Force
             $plan = New-AzsPlan -Name $PlanName -DisplayName $PlanName -Location $azsLocation -ResourceGroupName $RGName -QuotaIds $QuotaIDs
             New-AzsOffer -Name $OfferName -DisplayName $OfferName -State Private -BasePlanIds $plan.Id -ResourceGroupName $RGName -Location $azsLocation -Confirm:$false
             Set-AzsOffer -Name $OfferName -DisplayName $OfferName -State Public -BasePlanIds $plan.Id -ResourceGroupName $RGName -Location $azsLocation -Confirm:$false
