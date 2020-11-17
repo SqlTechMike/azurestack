@@ -183,7 +183,7 @@ elseif (($skipRP -eq $false) -and ($progressCheck -ne "Complete")) {
 
             # Create the RG to hold the assets in the admin space
             if (-not (Get-AzResourceGroup -Name $adminDbRg -Location $azsLocation -ErrorAction SilentlyContinue)) {
-                New-AzResourceGroup -Name $adminDbRg -Location $azsLocation -Force -Confirm:$false -ErrorAction Stop
+                New-AzResourceGroup -Name $adminDbRg -Location $azsLocation -Force -ErrorAction Stop
             }
 
             # Add host server to MySQL RP
@@ -196,13 +196,11 @@ elseif (($skipRP -eq $false) -and ($progressCheck -ne "Complete")) {
             }
             if ($dbHost -eq "MySQL") {
                 New-AzResourceGroupDeployment -Name AddMySQLHostingServer -ResourceGroupName $adminDbRg -TemplateUri $templateURI `
-                    -username "root" -password $secureVMpwd -hostingServerName $dbFqdn -totalSpaceMB 20480 `
-                    -skuName "MySQL80" -Mode Incremental -Verbose -ErrorAction Stop
+                    -Mode Incremental -Verbose -ErrorAction Stop
             }
             elseif ($dbHost -eq "SQLServer") {
                 New-AzResourceGroupDeployment -Name AddSQLServerHostingServer -ResourceGroupName $adminDbRg -TemplateUri $templateURI `
-                    -hostingServerName $dbFqdn -hostingServerSQLLoginName "sa" -hostingServerSQLLoginPassword $secureVMpwd -totalSpaceMB 20480 `
-                    -skuName "MSSQL2017" -Mode Incremental -Verbose -ErrorAction Stop
+                    -totalSpaceMB 20480 -Mode Incremental -Verbose -ErrorAction Stop
             }
             # Update the AzSPoC database with successful completion
             $progressStage = $progressName
