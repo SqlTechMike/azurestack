@@ -1,4 +1,4 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param (
     [Parameter(Mandatory = $true)]
     [String] $azsPath,
@@ -193,9 +193,9 @@ elseif ((!$skip2019Images) -and ($progressCheck -ne "Complete")) {
             }
 
             Write-Host "Cleaning up old stale logins for this session"
-            Get-AzureRmContext -ListAvailable | Where-Object { $_.Environment -like "Azure*" } | Remove-AzureRmAccount | Out-Null
-            Clear-AzureRmContext -Scope CurrentUser -Force
-            Disable-AzureRMContextAutosave -Scope CurrentUser
+            Get-AzContext -ListAvailable | Where-Object { $_.Environment -like "Azure*" } | Remove-AzAccount | Out-Null
+            Clear-AzContext -Scope CurrentUser -Force
+            Disable-AzContextAutosave -Scope CurrentUser
 
             # Need to confirm if Windows Update stage previously completed
             if ($image -ne "UbuntuServer") {
@@ -407,24 +407,24 @@ elseif ((!$skip2019Images) -and ($progressCheck -ne "Complete")) {
             # Log into Azure Stack to check for existing images and push new ones if required ###
             Write-Host "Logging into Azure Stack"
             $ArmEndpoint = "https://adminmanagement.$customDomainSuffix"
-            Add-AzureRMEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop
-            Add-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $TenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
-            $sub = Get-AzureRmSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
-            $azureContext = Get-AzureRmSubscription -SubscriptionID $sub.SubscriptionId | Select-AzureRmSubscription
-            $azsLocation = (Get-AzureRmLocation).DisplayName
+            Add-AzEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop
+            Add-AzAccount -Environment "AzureStackAdmin" -Tenant $TenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
+            $sub = Get-AzSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
+            $azureContext = Get-AzSubscription -SubscriptionID $sub.SubscriptionId | Select-AzSubscription
+            $azsLocation = (Get-AzLocation).DisplayName
             if (($registerAzS -eq $true) -and ($deploymentMode -eq "Online")) {
                 #if ($image -notlike "*2019") {
                 if ($image) {
                     # Logout to clean up
                     Write-Host "Logging out to clear up stale logins"
-                    Get-AzureRmContext -ListAvailable | Where-Object { $_.Environment -like "Azure*" } | Remove-AzureRmAccount | Out-Null
-                    Clear-AzureRmContext -Scope CurrentUser -Force
+                    Get-AzContext -ListAvailable | Where-Object { $_.Environment -like "Azure*" } | Remove-AzAccount | Out-Null
+                    Clear-AzContext -Scope CurrentUser -Force
                     ### Login to Azure to get all the details about the syndicated marketplace offering ###
                     #Import-Module "$modulePath\Syndication\AzureStack.MarketplaceSyndication.psm1"
-                    Add-AzureRmAccount -EnvironmentName $azureEnvironment -SubscriptionId $azureRegSubId -TenantId $azureRegTenantID -Credential $azureRegCreds -ErrorAction Stop | Out-Null
-                    $azureEnv = Get-AzureRmEnvironment -Name $azureEnvironment
+                    Add-AzAccount -Environment $azureEnvironment -Subscription $azureRegSubId -Tenant $azureRegTenantID -Credential $azureRegCreds -ErrorAction Stop | Out-Null
+                    $azureEnv = Get-AzEnvironment -Name $azureEnvironment
                     Remove-Variable -Name Registration -Force -Confirm:$false -ErrorAction SilentlyContinue
-                    $Registration = (Get-AzureRmResource | Where-Object { ($_.ResourceType -eq "Microsoft.AzureStack/registrations") `
+                    $Registration = (Get-AzResource | Where-Object { ($_.ResourceType -eq "Microsoft.AzureStack/registrations") `
                                 -and (($_.Name -like "*$azsRegName*") -or ($_.Name -like "AzureStack*")) } | Select-Object -First 1 -ErrorAction SilentlyContinue).Name
                     if (!$Registration) {
                         throw "No registration records found in your chosen Azure subscription. Please validate the success of your Azure Stack POC registration and ensure records have been created successfully."
@@ -523,9 +523,9 @@ elseif ((!$skip2019Images) -and ($progressCheck -ne "Complete")) {
             }
 
             ### Log back into Azure Stack to check for existing images and push new ones if required ###
-            Add-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $TenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
-            $sub = Get-AzureRmSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
-            $azureContext = Get-AzureRmSubscription -SubscriptionID $sub.SubscriptionId | Select-AzureRmSubscription
+            Add-AzAccount -Environment "AzureStackAdmin" -Tenant $TenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
+            $sub = Get-AzSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
+            $azureContext = Get-AzSubscription -SubscriptionID $sub.SubscriptionId | Select-AzSubscription
             Write-Host "Checking to see if the image is present in your Azure Stack Platform Image Repository"
             Write-Host "We first want to check if there is a failed or canceled upload from a previous attempt"
             if ($(Get-AzsPlatformImage -Location $azsLocation -Publisher $azpkg.publisher -Offer $azpkg.offer -Sku $azpkg.sku -ErrorAction SilentlyContinue) | Where-Object { ($_.Id -like "*$($azpkg.sku)/*") -and $_.ProvisioningState -eq "Failed" }) {
@@ -557,21 +557,21 @@ elseif ((!$skip2019Images) -and ($progressCheck -ne "Complete")) {
                 Start-Sleep -Seconds $delay
 
                 # Test/Create RG
-                if (-not (Get-AzureRmResourceGroup -Name $azsImagesRGName -Location $azsLocation -ErrorAction SilentlyContinue)) { New-AzureRmResourceGroup -Name $azsImagesRGName -Location $azsLocation -Force -Confirm:$false -ErrorAction Stop }
+                if (-not (Get-AzResourceGroup -Name $azsImagesRGName -Location $azsLocation -ErrorAction SilentlyContinue)) { New-AzResourceGroup -Name $azsImagesRGName -Location $azsLocation -Force -Confirm:$false -ErrorAction Stop }
                 # Test/Create Storage
-                $azsStorageAccount = Get-AzureRmStorageAccount -Name $azsImagesStorageAccountName -ResourceGroupName $azsImagesRGName -ErrorAction SilentlyContinue
-                if (-not ($azsStorageAccount)) { $azsStorageAccount = New-AzureRmStorageAccount -Name $azsImagesStorageAccountName -Location $azsLocation -ResourceGroupName $azsImagesRGName -Type Standard_LRS -ErrorAction Stop }
-                Set-AzureRmCurrentStorageAccount -StorageAccountName $azsImagesStorageAccountName -ResourceGroupName $azsImagesRGName | Out-Null
+                $azsStorageAccount = Get-AzStorageAccount -Name $azsImagesStorageAccountName -ResourceGroupName $azsImagesRGName -ErrorAction SilentlyContinue
+                if (-not ($azsStorageAccount)) { $azsStorageAccount = New-AzStorageAccount -Name $azsImagesStorageAccountName -Location $azsLocation -ResourceGroupName $azsImagesRGName -SkuName Standard_LRS -ErrorAction Stop }
+                Set-AzCurrentStorageAccount -Name $azsImagesStorageAccountName -ResourceGroupName $azsImagesRGName | Out-Null
                 # Test/Create Container
-                $azsContainer = Get-AzureStorageContainer -Name $azsImagesContainerName -ErrorAction SilentlyContinue
-                if (-not ($azsContainer)) { $azsContainer = New-AzureStorageContainer -Name $azsImagesContainerName -Permission Blob -Context $azsStorageAccount.Context -ErrorAction Stop }
+                $azsContainer = Get-AzStorageContainer -Name $azsImagesContainerName -ErrorAction SilentlyContinue
+                if (-not ($azsContainer)) { $azsContainer = New-AzStorageContainer -Name $azsImagesContainerName -Permission Blob -Context $azsStorageAccount.Context -ErrorAction Stop }
 
                 if ($image -eq "UbuntuServer") { $blobName = "$($azpkg.offer)$($azpkg.vhdVersion).vhd" }
                 else { $blobName = "$($imageType).$($vhdVersion).vhd" }
 
-                if ($(Get-AzureStorageBlob -Container $azsImagesContainerName -Blob "$blobName" -Context $azsStorageAccount.Context -ErrorAction SilentlyContinue)) {
+                if ($(Get-AzStorageBlob -Container $azsImagesContainerName -Blob "$blobName" -Context $azsStorageAccount.Context -ErrorAction SilentlyContinue)) {
                     Write-Host "You already have an upload of $blobName within your Storage Account. No need to re-upload."
-                    $imageURI = $((Get-AzureStorageBlob -Container $azsImagesContainerName -Blob "$blobName" -Context $azsStorageAccount.Context -ErrorAction SilentlyContinue).ICloudBlob.StorageUri.PrimaryUri.AbsoluteUri)
+                    $imageURI = $((Get-AzStorageBlob -Container $azsImagesContainerName -Blob "$blobName" -Context $azsStorageAccount.Context -ErrorAction SilentlyContinue).ICloudBlob.StorageUri.PrimaryUri.AbsoluteUri)
                     Write-Host "VHD path = $imageURI"
                 }
                 else {
@@ -845,19 +845,19 @@ elseif ((!$skip2019Images) -and ($progressCheck -ne "Complete")) {
                     # Sometimes Add-AzureRmVHD has an error about "The pipeline was not run because a pipeline is already running. Pipelines cannot be run concurrently". Rerunning the upload typically helps.
                     # Check that a) there's no VHD uploaded and b) the previous attempt(s) didn't complete successfully and c) you've attempted an upload no more than 3 times
                     $uploadVhdAttempt = 1
-                    while (!$(Get-AzureStorageBlob -Container $azsImagesContainerName -Blob $serverVHD.Name -Context $azsStorageAccount.Context -ErrorAction SilentlyContinue) -and (!$uploadSuccess) -and ($uploadVhdAttempt -le 3)) {
+                    while (!$(Get-AzStorageBlob -Container $azsImagesContainerName -Blob $serverVHD.Name -Context $azsStorageAccount.Context -ErrorAction SilentlyContinue) -and (!$uploadSuccess) -and ($uploadVhdAttempt -le 3)) {
                         Try {
                             # Log back into Azure Stack to ensure login hasn't timed out
                             Write-Host "Upload Attempt: $uploadVhdAttempt"
-                            Add-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $TenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
-                            $sub = Get-AzureRmSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
-                            $azureContext = Get-AzureRmSubscription -SubscriptionID $sub.SubscriptionId | Select-AzureRmSubscription
+                            Add-AzAccount -Environment "AzureStackAdmin" -Tenant $TenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
+                            $sub = Get-AzSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
+                            $azureContext = Get-AzSubscription -SubscriptionID $sub.SubscriptionId | Select-AzSubscription
                             #Add-AzureRmVhd -Destination $imageURI -ResourceGroupName $azsImagesRGName -LocalFilePath $serverVHD.FullName -OverWrite -Verbose -ErrorAction Stop
                             ################## AzCopy Testing ##############################################
                             $serverVHDDirectory = ($serverVHD).DirectoryName
                             $containerDestination = '{0}{1}' -f $azsStorageAccount.PrimaryEndpoints.Blob, $azsImagesContainerName
                             $azCopyPath = "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
-                            $storageAccountKey = (Get-AzureRmStorageAccountKey -ResourceGroupName $azsImagesRGName -Name $azsImagesStorageAccountName).Value[0]
+                            $storageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $azsImagesRGName -Name $azsImagesStorageAccountName).Value[0]
                             $azCopyCmd = [string]::Format("""{0}"" /source:""{1}"" /dest:""{2}"" /destkey:""{3}"" /BlobType:""page"" /Pattern:""{4}"" /Y /V:""{5}"" /Z:""{6}""", $azCopyPath, $serverVHDDirectory, $containerDestination, $storageAccountKey, $blobName, $azCopyLogPath, $journalPath)
                             Write-Host "Executing the following command:`n$azCopyCmd"
                             $result = cmd /c $azCopyCmd
@@ -893,13 +893,13 @@ elseif ((!$skip2019Images) -and ($progressCheck -ne "Complete")) {
                         Get-ChildItem -Path "$imageRootPath\images\$image\" -Filter "$($azpkg.offer)$($azpkg.vhdVersion).tar" | Remove-Item -Force
                         Get-ChildItem -Path "$imageRootPath\images\$image\" -Filter "$($azpkg.offer)$($azpkg.vhdVersion).tar.gz" | Remove-Item -Force
                         Write-Host "Cleaning up VHD from storage account"
-                        Remove-AzureStorageBlob -Blob $blobName -Container $azsImagesContainerName -Context $azsStorageAccount.Context -Force
+                        Remove-AzStorageBlob -Blob $blobName -Container $azsImagesContainerName -Context $azsStorageAccount.Context -Force
                     }
                     else {
                         Write-Host "Cleaning up local hard drive space - deleting VHD file"
                         Get-ChildItem -Path "$imageRootPath\images\$image\" -Filter "$($blobname)" | Remove-Item -Force
                         Write-Host "Cleaning up VHD from storage account"
-                        Remove-AzureStorageBlob -Blob $blobName -Container $azsImagesContainerName -Context $azsStorageAccount.Context -Force
+                        Remove-AzStorageBlob -Blob $blobName -Container $azsImagesContainerName -Context $azsStorageAccount.Context -Force
                     }
                 }
                 elseif ($(Get-AzsPlatformImage -Location $azsLocation -Publisher $azpkg.publisher -Offer $azpkg.offer -Sku $azpkg.sku -Version $azpkg.vhdVersion -ErrorAction SilentlyContinue).ProvisioningState -eq 'Failed') {
@@ -946,9 +946,9 @@ elseif ((!$skip2019Images) -and ($progressCheck -ne "Complete")) {
                 }
                 # If this isn't an online deployment, use the extracted zip file, and upload to a storage account
                 elseif ((($registerAzS -eq $true) -or ($registerAzS -eq $false)) -and (($deploymentMode -ne "Online"))) {
-                    $azsStorageAccount = Get-AzureRmStorageAccount -Name $azsImagesStorageAccountName -ResourceGroupName $azsImagesRGName -ErrorAction SilentlyContinue
-                    Set-AzureRmCurrentStorageAccount -StorageAccountName $azsImagesStorageAccountName -ResourceGroupName $azsImagesRGName | Out-Null
-                    $azsContainer = Get-AzureStorageContainer -Name $azsImagesContainerName -ErrorAction SilentlyContinue
+                    $azsStorageAccount = Get-AzStorageAccount -Name $azsImagesStorageAccountName -ResourceGroupName $azsImagesRGName -ErrorAction SilentlyContinue
+                    Set-AzCurrentStorageAccount -Name $azsImagesStorageAccountName -ResourceGroupName $azsImagesRGName | Out-Null
+                    $azsContainer = Get-AzStorageContainer -Name $azsImagesContainerName -ErrorAction SilentlyContinue
                     $azpkgPackageURL = AddOfflineAZPKG -azpkgPackageName $azpkgPackageName -azCopyLogPath $azCopyLogPath -Verbose
                 }
                 $Retries = 0

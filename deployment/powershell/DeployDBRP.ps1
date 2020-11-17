@@ -1,4 +1,4 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param (
     [Parameter(Mandatory = $true)]
     [String] $azsPath,
@@ -132,23 +132,23 @@ elseif (($skipRP -eq $false) -and ($progressCheck -ne "Complete")) {
                 $progressCheck = CheckProgress -progressStage $progressStage
                 Write-Host "Logging into Azure Stack"
                 $ArmEndpoint = "https://adminmanagement.$customDomainSuffix"
-                Add-AzureRMEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop
-                Add-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $tenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
-                $sub = Get-AzureRmSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
-                $azureContext = Get-AzureRmSubscription -SubscriptionID $sub.SubscriptionId | Select-AzureRmSubscription
+                Add-AzEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop
+                Add-AzAccount -Environment "AzureStackAdmin" -Tenant $tenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
+                $sub = Get-AzSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
+                $azureContext = Get-AzSubscription -SubscriptionID $sub.SubscriptionId | Select-AzSubscription
                 # Get Azure Stack location
-                $azsLocation = (Get-AzureRmLocation).DisplayName
+                $azsLocation = (Get-AzLocation).DisplayName
                 # Perform a cleanup of the failed deployment - RG, Files
                 Write-Host "Checking for a previously failed deployemnt and cleaning up."
                 $rgName = "system.$azslocation.$($rp)adapter"
-                if (Get-AzureRmResourceGroup -Name "$rgName" -Location $azsLocation -ErrorAction SilentlyContinue) {
-                    Remove-AzureRmResourceGroup -Name $rgName -Force -ErrorAction Stop -Verbose
+                if (Get-AzResourceGroup -Name "$rgName" -Location $azsLocation -ErrorAction SilentlyContinue) {
+                    Remove-AzResourceGroup -Name $rgName -Force -ErrorAction Stop -Verbose
                 }
 
                 Write-Host "Clearing previous Azure/Azure Stack logins"
-                Get-AzureRmContext -ListAvailable | Where-Object { $_.Environment -like "Azure*" } | Remove-AzureRmAccount | Out-Null
-                Clear-AzureRmContext -Scope CurrentUser -Force
-                Disable-AzureRMContextAutosave -Scope CurrentUser
+                Get-AzContext -ListAvailable | Where-Object { $_.Environment -like "Azure*" } | Remove-AzAccount | Out-Null
+                Clear-AzContext -Scope CurrentUser -Force
+                Disable-AzContextAutosave -Scope CurrentUser
 
                 # Need to ensure this stage doesn't start before the Windows Server images have been put into the PIR
                 $serverCore2016JobCheck = CheckProgress -progressStage "ServerCore2016Image"
@@ -164,17 +164,17 @@ elseif (($skipRP -eq $false) -and ($progressCheck -ne "Complete")) {
                 ### Login to Azure Stack ###
                 Write-Host "Logging into Azure Stack"
                 $ArmEndpoint = "https://adminmanagement.$customDomainSuffix"
-                Add-AzureRMEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop
-                Add-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $tenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
-                $sub = Get-AzureRmSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
-                $azureContext = Get-AzureRmSubscription -SubscriptionID $sub.SubscriptionId | Select-AzureRmSubscription
+                Add-AzEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop
+                Add-AzAccount -Environment "AzureStackAdmin" -Tenant $tenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
+                $sub = Get-AzSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
+                $azureContext = Get-AzSubscription -SubscriptionID $sub.SubscriptionId | Select-AzSubscription
 
                 # Get Azure Stack location
-                $azsLocation = (Get-AzureRmLocation).DisplayName
+                $azsLocation = (Get-AzLocation).DisplayName
                 # Need to 100% confirm that the ServerCoreImage is ready as it seems that starting the MySQL/SQL RP deployment immediately is causing an issue
                 Write-Host "Need to confirm that the Windows Server 2016 Core image is available in the gallery and ready"
                 $azsPlatformImageExists = (Get-AzsPlatformImage -Location $azsLocation -Publisher "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Server-Core" -ErrorAction SilentlyContinue).ProvisioningState -eq 'Succeeded'
-                $azureRmVmPlatformImageExists = (Get-AzureRmVMImage -Location $azsLocation -Publisher "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Server-Core" -ErrorAction SilentlyContinue).StatusCode -eq 'OK'
+                $azureRmVmPlatformImageExists = (Get-AzVMImage -Location $azsLocation -Publisher "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Server-Core" -ErrorAction SilentlyContinue).StatusCode -eq 'OK'
                 Write-Host "Check #1 - Using Get-AzsPlatformImage to check for Windows Server 2016 Core image"
                 if ($azsPlatformImageExists) {
                     Write-Host "Get-AzsPlatformImage, successfully located an appropriate image with the following details:"
@@ -189,7 +189,7 @@ elseif (($skipRP -eq $false) -and ($progressCheck -ne "Complete")) {
                     Write-Host "Using Get-AzureRmVMImage, successfully located an appropriate image with the following details:"
                     Write-Host "Publisher: MicrosoftWindowsServer | Offer: WindowsServer | Sku: 2016-Datacenter-Server-Core"
                 }
-                While (!$(Get-AzureRmVMImage -Location $azsLocation -Publisher "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Server-Core" -ErrorAction SilentlyContinue).StatusCode -eq 'OK') {
+                While (!$(Get-AzVMImage -Location $azsLocation -Publisher "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Server-Core" -ErrorAction SilentlyContinue).StatusCode -eq 'OK') {
                     Write-Host "Using Get-AzureRmVMImage to test, ServerCoreImage is not ready yet. Delaying by 20 seconds"
                     Start-Sleep -Seconds 20
                 }

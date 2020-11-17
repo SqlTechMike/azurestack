@@ -1,4 +1,4 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param (
     [Parameter(Mandatory = $true)]
     [String] $deploymentMode,
@@ -62,9 +62,9 @@ if (($registerAzS -eq $true) -and ($deploymentMode -ne "Offline")) {
             }
 
             Write-Host "Clearing previous Azure/Azure Stack logins"
-            Get-AzureRmContext -ListAvailable | Where-Object { $_.Environment -like "Azure*" } | Remove-AzureRmAccount | Out-Null
-            Clear-AzureRmContext -Scope CurrentUser -Force
-            Disable-AzureRMContextAutosave -Scope CurrentUser
+            Get-AzContext -ListAvailable | Where-Object { $_.Environment -like "Azure*" } | Remove-AzAccount | Out-Null
+            Clear-AzContext -Scope CurrentUser -Force
+            Disable-AzContextAutosave -Scope CurrentUser
 
             <#Write-Host "Importing Azure.Storage and AzureRM.Storage modules"
             Import-Module -Name Azure.Storage -RequiredVersion 4.5.0
@@ -97,10 +97,10 @@ if (($registerAzS -eq $true) -and ($deploymentMode -ne "Offline")) {
             }
             Write-Host "Logging into Azure Stack"
             $ArmEndpoint = "https://adminmanagement.$customDomainSuffix"
-            Add-AzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop
-            Add-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $tenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
-            $sub = Get-AzureRmSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
-            $azureContext = Get-AzureRmSubscription -SubscriptionID $sub.SubscriptionId | Select-AzureRmSubscription
+            Add-AzEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop
+            Add-AzAccount -Environment "AzureStackAdmin" -Tenant $tenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
+            $sub = Get-AzSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
+            $azureContext = Get-AzSubscription -SubscriptionID $sub.SubscriptionId | Select-AzSubscription
             $activationName = "default"
             $activationRG = "azurestack-activation"
             Write-Host "Checking if Azure Stack is activated and successfully registered"
@@ -111,9 +111,9 @@ if (($registerAzS -eq $true) -and ($deploymentMode -ne "Offline")) {
                     while (!$(Get-AzsAzureBridgeDownloadedProduct -Name $extension -ActivationName $activationName -ResourceGroupName $activationRG -ErrorAction SilentlyContinue -Verbose)) {
                         Write-Host "Didn't find $extension in your gallery. Downloading from the Azure Stack Marketplace"
                         Invoke-AzsAzureBridgeProductDownload -ActivationName $activationName -Name $extension -ResourceGroupName $activationRG -Force -Confirm:$false -Verbose
-                        Add-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $tenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
-                        $sub = Get-AzureRmSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
-                        $azureContext = Get-AzureRmSubscription -SubscriptionID $sub.SubscriptionId | Select-AzureRmSubscription
+                        Add-AzAccount -Environment "AzureStackAdmin" -Tenant $tenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
+                        $sub = Get-AzSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
+                        $azureContext = Get-AzSubscription -SubscriptionID $sub.SubscriptionId | Select-AzSubscription
                     }
                 }
                 $getDownloads = (Get-AzsAzureBridgeDownloadedProduct -ActivationName $activationName -ResourceGroupName $activationRG -ErrorAction SilentlyContinue -Verbose | Where-Object { ($_.ProductKind -eq "virtualMachineExtension") -and ($_.Name -like "*microsoft*") })

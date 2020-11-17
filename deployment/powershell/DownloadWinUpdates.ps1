@@ -1,4 +1,4 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param (
     [Parameter(Mandatory = $true)]
     [String] $azsPath,
@@ -63,9 +63,9 @@ if (($progressCheck -eq "Incomplete") -or ($progressCheck -eq "Failed")) {
         }
 
         Write-Host "Clearing previous Azure/Azure Stack logins"
-        Get-AzureRmContext -ListAvailable | Where-Object { $_.Environment -like "Azure*" } | Remove-AzureRmAccount | Out-Null
-        Clear-AzureRmContext -Scope CurrentUser -Force
-        Disable-AzureRMContextAutosave -Scope CurrentUser
+        Get-AzContext -ListAvailable | Where-Object { $_.Environment -like "Azure*" } | Remove-AzAccount | Out-Null
+        Clear-AzContext -Scope CurrentUser -Force
+        Disable-AzContextAutosave -Scope CurrentUser
 
         <#Write-Host "Importing Azure.Storage and AzureRM.Storage modules"
         Import-Module -Name Azure.Storage -RequiredVersion 4.5.0
@@ -75,11 +75,11 @@ if (($progressCheck -eq "Incomplete") -or ($progressCheck -eq "Failed")) {
         # Log into Azure Stack to check for existing images and push new ones if required ###
         Write-Host "Logging into Azure Stack to check if images are required, and therefore if updates need downloading"
         $ArmEndpoint = "https://adminmanagement.$customDomainSuffix"
-        Add-AzureRMEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop
-        Add-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $TenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
-        $sub = Get-AzureRmSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
-        $azureContext = Get-AzureRmSubscription -SubscriptionID $sub.SubscriptionId | Select-AzureRmSubscription
-        $azsLocation = (Get-AzureRmLocation).DisplayName
+        Add-AzEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop
+        Add-AzAccount -Environment "AzureStackAdmin" -Tenant $TenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
+        $sub = Get-AzSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
+        $azureContext = Get-AzSubscription -SubscriptionID $sub.SubscriptionId | Select-AzSubscription
+        $azsLocation = (Get-AzLocation).DisplayName
         Write-Host "Determine if a Windows Server 2019 ISO has been provided"
         if ($ISOPath2019) {
             $versionArray = @("2016", "2019")

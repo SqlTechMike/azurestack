@@ -1,4 +1,4 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param (
     [Parameter(Mandatory = $true)]
     [ValidateSet("MySQL", "SQLServer")]
@@ -89,9 +89,9 @@ elseif (($skipRP -eq $false) -and ($progressCheck -ne "Complete")) {
                 $progressCheck = CheckProgress -progressStage $progressStage
             }
             Write-Host "Clearing previous Azure/Azure Stack logins"
-            Get-AzureRmContext -ListAvailable | Where-Object { $_.Environment -like "Azure*" } | Remove-AzureRmAccount | Out-Null
-            Clear-AzureRmContext -Scope CurrentUser -Force
-            Disable-AzureRMContextAutosave -Scope CurrentUser
+            Get-AzContext -ListAvailable | Where-Object { $_.Environment -like "Azure*" } | Remove-AzAccount | Out-Null
+            Clear-AzContext -Scope CurrentUser -Force
+            Disable-AzContextAutosave -Scope CurrentUser
 
             <#Write-Host "Importing Azure.Storage and AzureRM.Storage modules"
             Import-Module -Name Azure.Storage -RequiredVersion 4.5.0
@@ -117,16 +117,16 @@ elseif (($skipRP -eq $false) -and ($progressCheck -ne "Complete")) {
             ### Login to Azure Stack ###
             Write-Host "Logging into Azure Stack"
             $ArmEndpoint = "https://adminmanagement.$customDomainSuffix"
-            Add-AzureRMEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop
-            Add-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $tenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
-            $azsLocation = (Get-AzureRmLocation).DisplayName
-            $sub = Get-AzureRmSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
-            Set-AzureRMContext -Subscription $sub.SubscriptionId -NAME $sub.Name -Force | Out-Null
+            Add-AzEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop
+            Add-AzAccount -Environment "AzureStackAdmin" -Tenant $tenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
+            $azsLocation = (Get-AzLocation).DisplayName
+            $sub = Get-AzSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
+            Set-AzContext -Subscription $sub.SubscriptionId -NAME $sub.Name -Force | Out-Null
             $subID = $sub.SubscriptionId
-            $azureContext = (Get-AzureRmContext).Account.Id
+            $azureContext = (Get-AzContext).Account.Id
             #$azureContext = Get-AzureRmSubscription -SubscriptionID $sub.SubscriptionId | Select-AzureRmSubscription
             #$subID = $azureContext.Subscription.Id
-            $azureEnvironment = Get-AzureRmEnvironment -Name AzureStackAdmin
+            $azureEnvironment = Get-AzEnvironment -Name AzureStackAdmin
 
             Write-Host "Setting variables for creating the SKU and Quota"
             # Set the variables and gather token for creating the SKU & Quota

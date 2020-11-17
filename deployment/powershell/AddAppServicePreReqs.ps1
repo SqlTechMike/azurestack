@@ -1,4 +1,4 @@
-ï»¿[CmdletBinding()]
+[CmdletBinding()]
 param (
     [Parameter(Mandatory = $true)]
     [String] $azsPath,
@@ -123,9 +123,9 @@ elseif (($skipAppService -eq $false) -and ($progressCheck -ne "Complete")) {
 
             # Cleanup PS Context
             Write-Host "Clearing previous Azure logins for this session"
-            Get-AzureRmContext -ListAvailable | Where-Object { $_.Environment -like "Azure*" } | Remove-AzureRmAccount | Out-Null
-            Clear-AzureRmContext -Scope CurrentUser -Force
-            Disable-AzureRMContextAutosave -Scope CurrentUser
+            Get-AzContext -ListAvailable | Where-Object { $_.Environment -like "Azure*" } | Remove-AzAccount | Out-Null
+            Clear-AzContext -Scope CurrentUser -Force
+            Disable-AzContextAutosave -Scope CurrentUser
 
             # Need to ensure this stage doesn't start before the App Service components have been downloaded
             $appServiceDownloadJobCheck = CheckProgress -progressStage "DownloadAppService"
@@ -139,8 +139,8 @@ elseif (($skipAppService -eq $false) -and ($progressCheck -ne "Complete")) {
             }
             Write-Host "Logging into Azure Stack"
             $ArmEndpoint = "https://adminmanagement.$customDomainSuffix"
-            Add-AzureRMEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop
-            $ADauth = (Get-AzureRmEnvironment -Name "AzureStackAdmin").ActiveDirectoryAuthority.TrimEnd('/')
+            Add-AzEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop
+            $ADauth = (Get-AzEnvironment -Name "AzureStackAdmin").ActiveDirectoryAuthority.TrimEnd('/')
 
             <#Write-Host "Importing storage modules for Azure.Storage and AzureRM.Storage."
             Import-Module -Name Azure.Storage -RequiredVersion 4.5.0
@@ -200,13 +200,13 @@ elseif (($skipAppService -eq $false) -and ($progressCheck -ne "Complete")) {
                 if (($authenticationType.ToString() -like "AzureAd") -and ($deploymentMode -ne "Offline")) {
                     # Logout to clean up
                     Write-Host "Clearing previous Azure logins for this session"
-                    Get-AzureRmContext -ListAvailable | Where-Object { $_.Environment -like "Azure*" } | Remove-AzureRmAccount | Out-Null
-                    Clear-AzureRmContext -Scope CurrentUser -Force
+                    Get-AzContext -ListAvailable | Where-Object { $_.Environment -like "Azure*" } | Remove-AzAccount | Out-Null
+                    Clear-AzContext -Scope CurrentUser -Force
                     Write-Host "Obtaining tenant ID"
                     $tenantId = (Invoke-RestMethod "$($ADauth)/$($azureDirectoryTenantName)/.well-known/openid-configuration").issuer.TrimEnd('/').Split('/')[-1]
                     Write-Host "Tenant ID is $tenantId"
                     Write-Host "Logging into Azure Cloud"
-                    Add-AzureRmAccount -EnvironmentName $azureEnvironment -TenantId $tenantId -Credential $azsCreds -ErrorAction Stop
+                    Add-AzAccount -Environment $azureEnvironment -Tenant $tenantId -Credential $azsCreds -ErrorAction Stop
                     Set-Location "$AppServicePath" -Verbose
                     Write-Host "Generating the application ID for the App Service installation"
                     if ($multiNode -eq $false) {
@@ -255,10 +255,10 @@ elseif (($skipAppService -eq $false) -and ($progressCheck -ne "Complete")) {
                 elseif ($authenticationType.ToString() -like "ADFS") {
                     Write-Host "Logging into Azure Stack"
                     $ArmEndpoint = "https://adminmanagement.$customDomainSuffix"
-                    Add-AzureRMEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop
-                    Add-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $TenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
-                    $sub = Get-AzureRmSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
-                    $azureContext = Get-AzureRmSubscription -SubscriptionID $sub.SubscriptionId | Select-AzureRmSubscription
+                    Add-AzEnvironment -Name "AzureStackAdmin" -ArmEndpoint "$ArmEndpoint" -ErrorAction Stop
+                    Add-AzAccount -Environment "AzureStackAdmin" -Tenant $TenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
+                    $sub = Get-AzSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
+                    $azureContext = Get-AzSubscription -SubscriptionID $sub.SubscriptionId | Select-AzSubscription
                     Set-Location "$AppServicePath" -Verbose
                     Write-Host "Generating the application ID for the App Service installation"
                     if ($multiNode -eq $false) {
@@ -291,15 +291,15 @@ elseif (($skipAppService -eq $false) -and ($progressCheck -ne "Complete")) {
                 if (!$([System.IO.File]::Exists("$AppServicePath\AzureAdPermissions.txt"))) {
                     # Logout to clean up
                     Write-Host "Clearing previous Azure logins for this session"
-                    Get-AzureRmContext -ListAvailable | Where-Object { $_.Environment -like "Azure*" } | Remove-AzureRmAccount | Out-Null
-                    Clear-AzureRmContext -Scope CurrentUser -Force
+                    Get-AzContext -ListAvailable | Where-Object { $_.Environment -like "Azure*" } | Remove-AzAccount | Out-Null
+                    Clear-AzContext -Scope CurrentUser -Force
                     # Grant permissions to Azure AD Service Principal
                     try {
                         Write-Host "Attempting to grant permissions to the AAD application, for the App Service."
                         $tenantId = (Invoke-RestMethod "$($ADauth)/$($azureDirectoryTenantName)/.well-known/openid-configuration").issuer.TrimEnd('/').Split('/')[-1]
                         Write-Host "Tenant ID is $tenantId"
                         Write-Host "Logging into Azure Cloud"
-                        Add-AzureRmAccount -EnvironmentName $azureEnvironment -TenantId $tenantId -Credential $azsCreds -ErrorAction Stop
+                        Add-AzAccount -Environment $azureEnvironment -Tenant $tenantId -Credential $azsCreds -ErrorAction Stop
                         Write-Host "Obtaining tokens"
                         $refreshToken = @([Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems() | Where-Object { $_.tenantId -eq $tenantId -and $_.ExpiresOn -gt (Get-Date) })[0].RefreshToken
                         $refreshtoken = $refreshtoken.Split("`n")[0]
@@ -314,7 +314,7 @@ elseif (($skipAppService -eq $false) -and ($progressCheck -ne "Complete")) {
                         }
                         $url = "https://main.iam.ad.ext.azure.com/api/RegisteredApplications/$identityApplicationID/Consent?onBehalfOfAll=true"
                         Write-Host "Granting permissions"
-                        $grantPermission = Invoke-RestMethod â€“Uri $url â€“Headers $header â€“Method POST -ErrorAction Stop -Verbose
+                        $grantPermission = Invoke-RestMethod –Uri $url –Headers $header –Method POST -ErrorAction Stop -Verbose
                         Write-Host "Creating text file to record confirmation of granting permissions successfully"
                         New-Item -Path "$AppServicePath\AzureAdPermissions.txt" -ItemType file -Force
                         Write-Output $grantPermission > "$AppServicePath\AzureAdPermissions.txt"
@@ -366,9 +366,9 @@ elseif (($skipAppService -eq $false) -and ($progressCheck -ne "Complete")) {
             }
 
             Write-Host "Logging into Azure Stack for further checks on the AddVMExtension stage"
-            Add-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $TenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
-            $sub = Get-AzureRmSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
-            $azureContext = Get-AzureRmSubscription -SubscriptionID $sub.SubscriptionId | Select-AzureRmSubscription
+            Add-AzAccount -Environment "AzureStackAdmin" -Tenant $TenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
+            $sub = Get-AzSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
+            $azureContext = Get-AzSubscription -SubscriptionID $sub.SubscriptionId | Select-AzSubscription
             if ((Get-AzsVMExtension -Publisher Microsoft.Compute -Verbose:$false) | Where-Object { ($_.ExtensionType -eq "CustomScriptExtension") -and ($_.TypeHandlerVersion -ge "1.9") -and ($_.ProvisioningState -eq "Succeeded") }) {
                 Write-Verbose -Message "You already have a valid Custom Script Extension (1.9.x) within your Azure Stack environment. App Service deployment can continue."
             }
@@ -403,26 +403,26 @@ elseif (($skipAppService -eq $false) -and ($progressCheck -ne "Complete")) {
                 $azsExtensionRGName = "azurestack-extension"
                 $azsExtensionStorageAccountName = "azsextensionstor"
                 $azsExtensionContainerName = "azsextensioncontainer"
-                $azsLocation = (Get-AzureRmLocation).DisplayName
+                $azsLocation = (Get-AzLocation).DisplayName
                 Write-Host "Resource Group = $azsExtensionRGName, Storage Account = $azsExtensionStorageAccountName and Container = $azsExtensionContainerName"
                 # Test/Create RG
-                if (-not (Get-AzureRmResourceGroup -Name $azsExtensionRGName -Location $azsLocation -ErrorAction SilentlyContinue)) {
+                if (-not (Get-AzResourceGroup -Name $azsExtensionRGName -Location $azsLocation -ErrorAction SilentlyContinue)) {
                     Write-Host "Creating the resource group: $azsExtensionRGName"
-                    New-AzureRmResourceGroup -Name $azsExtensionRGName -Location $azsLocation -Force -Confirm:$false -ErrorAction Stop 
+                    New-AzResourceGroup -Name $azsExtensionRGName -Location $azsLocation -Force -Confirm:$false -ErrorAction Stop 
                 }
                 # Test/Create Storage
-                $azsStorageAccount = Get-AzureRmStorageAccount -Name $azsExtensionStorageAccountName -ResourceGroupName $azsExtensionRGName -ErrorAction SilentlyContinue
+                $azsStorageAccount = Get-AzStorageAccount -Name $azsExtensionStorageAccountName -ResourceGroupName $azsExtensionRGName -ErrorAction SilentlyContinue
                 if (-not ($azsStorageAccount)) {
                     Write-Host "Creating the storage account: $azsExtensionStorageAccountName"
-                    $azsStorageAccount = New-AzureRmStorageAccount -Name $azsExtensionStorageAccountName -Location $azsLocation -ResourceGroupName $azsExtensionRGName -Type Standard_LRS -ErrorAction Stop
+                    $azsStorageAccount = New-AzStorageAccount -Name $azsExtensionStorageAccountName -Location $azsLocation -ResourceGroupName $azsExtensionRGName -SkuName Standard_LRS -ErrorAction Stop
                 }
                 Write-Host "Setting the storage context"
-                Set-AzureRmCurrentStorageAccount -StorageAccountName $azsExtensionStorageAccountName -ResourceGroupName $azsExtensionRGName | Out-Null
+                Set-AzCurrentStorageAccount -Name $azsExtensionStorageAccountName -ResourceGroupName $azsExtensionRGName | Out-Null
                 # Test/Create Container
-                $azsContainer = Get-AzureStorageContainer -Name $azsExtensionContainerName -ErrorAction SilentlyContinue
+                $azsContainer = Get-AzStorageContainer -Name $azsExtensionContainerName -ErrorAction SilentlyContinue
                 if (-not ($azsContainer)) { 
                     Write-Host "Creating the storage container: $azsExtensionContainerName"
-                    $azsContainer = New-AzureStorageContainer -Name $azsExtensionContainerName -Permission Blob -Context $azsStorageAccount.Context -ErrorAction Stop 
+                    $azsContainer = New-AzStorageContainer -Name $azsExtensionContainerName -Permission Blob -Context $azsStorageAccount.Context -ErrorAction Stop 
                 }
             
                 # Upload files to Storage
@@ -436,18 +436,18 @@ elseif (($skipAppService -eq $false) -and ($progressCheck -ne "Complete")) {
                     $itemDirectory = $item.DirectoryName
                     $uploadItemAttempt = 1
                     $sideloadCSEZipAttempt = 1
-                    while (!$(Get-AzureStorageBlob -Container $azsExtensionContainerName -Blob $itemName -Context $azsStorageAccount.Context -ErrorAction SilentlyContinue) -and ($uploadItemAttempt -le 3)) {
+                    while (!$(Get-AzStorageBlob -Container $azsExtensionContainerName -Blob $itemName -Context $azsStorageAccount.Context -ErrorAction SilentlyContinue) -and ($uploadItemAttempt -le 3)) {
                         try {
                             # Log back into Azure Stack to ensure login hasn't timed out
                             Write-Host "$itemName not found. Upload Attempt: $uploadItemAttempt"
-                            Add-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $TenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
-                            $sub = Get-AzureRmSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
-                            $azureContext = Get-AzureRmSubscription -SubscriptionID $sub.SubscriptionId | Select-AzureRmSubscription
+                            Add-AzAccount -Environment "AzureStackAdmin" -Tenant $TenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
+                            $sub = Get-AzSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
+                            $azureContext = Get-AzSubscription -SubscriptionID $sub.SubscriptionId | Select-AzSubscription
                             #Set-AzureStorageBlobContent -File "$itemFullPath" -Container $azsExtensionContainerName -Blob "$itemName" -Context $azsExtensionStorageAccount.Context -ErrorAction Stop -Verbose | Out-Null
                             ################## AzCopy Testing ##############################################
                             $containerDestination = '{0}{1}' -f $azsStorageAccount.PrimaryEndpoints.Blob, $azsExtensionContainerName
                             $azCopyPath = "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
-                            $storageAccountKey = (Get-AzureRmStorageAccountKey -ResourceGroupName $azsExtensionRGName -Name $azsExtensionStorageAccountName).Value[0]
+                            $storageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $azsExtensionRGName -Name $azsExtensionStorageAccountName).Value[0]
                             $azCopyCmd = [string]::Format("""{0}"" /source:""{1}"" /dest:""{2}"" /destkey:""{3}"" /Pattern:""{4}"" /Y /V:""{5}"" /Z:""{6}""", $azCopyPath, $itemDirectory, $containerDestination, $storageAccountKey, $itemName, $azCopyLogPath, $journalPath)
                             Write-Host "Executing the following command:`n'n$azCopyCmd"
                             $result = cmd /c $azCopyCmd
@@ -470,9 +470,9 @@ elseif (($skipAppService -eq $false) -and ($progressCheck -ne "Complete")) {
                         while ($null -eq ((Get-AzsVMExtension -Publisher Microsoft.Compute -Verbose:$false) | Where-Object { ($_.ExtensionType -eq "CustomScriptExtension") -and ($_.TypeHandlerVersion -ge "1.9") -and ($_.ProvisioningState -eq "Succeeded") }) -and ($sideloadCSEZipAttempt -le 3)) {
                             try {
                                 # Log back into Azure Stack to ensure login hasn't timed out
-                                Add-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $TenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
-                                $sub = Get-AzureRmSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
-                                $azureContext = Get-AzureRmSubscription -SubscriptionID $sub.SubscriptionId | Select-AzureRmSubscription
+                                Add-AzAccount -Environment "AzureStackAdmin" -Tenant $TenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
+                                $sub = Get-AzSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
+                                $azureContext = Get-AzSubscription -SubscriptionID $sub.SubscriptionId | Select-AzSubscription
                                 Write-Host -Message "Adding Custom Script Extension (ZIP) to your environment. Attempt: $sideloadCSEZipAttempt"
                                 $URI = '{0}{1}/{2}' -f $azsStorageAccount.PrimaryEndpoints.Blob, $azsExtensionContainerName, $itemName
                                 $version = "1.9.3"
