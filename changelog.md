@@ -1,9 +1,53 @@
-Azure Stack Development Kit Configurator Changelog
+Azure Stack POC Configurator Changelog
 ==============
 
 Version History
 -----------
 Here you'll find information on key changes, bug fixes and improvements made by version.
+
+### What's new in version 2002.1?
+* AVMA fix
+* Database Timeout RP fix
+
+### What's new in version 2002?
+* Improved Windows Update download process
+* Updated Ubuntu Server 16.04 build
+
+### What's new in version 1910.2?
+* More fixes for DBRP install
+* Updated Ubuntu 16.04 Build
+
+### What's new in version 1910.1?
+* Fixes for DBRP installation in partial offline mode
+
+### What's new in version 1910?
+* Updated to support ASDK 1.1910.0.58
+* Updated PowerShell to 1.8.0
+* Updated Ubuntu Server image - November 2019, included support for tar.gz extraction
+* Updated to support MySQL/SQL 1.1.47.0 release
+
+### What's new in version 1908.2?
+* Alternative AzureCloud support
+* MySQL8 fixes
+* Updated Ubuntu image
+
+### What's new in version 1908.1?
+* CSV 2016/2019 fixes
+* Fixes for WS2019 Image Creation/Activation
+
+### What's new in version 1908?
+* Windows Server 2019 Host OS Fixes - Cluster Shared Volume path
+* SQL Server on Linux VM Size increase
+
+### What's new in version 1907.1?
+* MultiNode fixes
+* Default Provider Subscription fixes
+
+### What's new in version 1907?
+* Updated to support ASDK 1.1907.0.20
+* Initial support for MultiNode deployments for POC purposes only
+* Rebranding and versioning to reflect multinode support
+* Minor bug fixes
 
 ### What's new in version 1906.3?
 * Minor bug fixes and cleanup
