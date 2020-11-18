@@ -368,7 +368,7 @@ elseif (($skipRP -eq $false) -and ($progressCheck -ne "Complete")) {
                         
             Write-Host "Creating a dedicated Resource Group for all $vmType hosting assets"
             if (-not (Get-AzResourceGroup -Name $rg -Location $azsLocation -ErrorAction SilentlyContinue)) {
-                New-AzResourceGroup -Name $rg -Location $azsLocation -Force -Confirm:$false -ErrorAction Stop
+                New-AzResourceGroup -Name $rg -Location $azsLocation -Force -ErrorAction Stop
             }
 
             # Need to insert a while loop to try installation 3 times with try/catch
@@ -398,16 +398,12 @@ elseif (($skipRP -eq $false) -and ($progressCheck -ne "Complete")) {
                             Start-Sleep -Seconds 30
                             Write-Host "Starting deployment again..."
                             New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $rg -TemplateUri $mainTemplateURI `
-                                -vmName "mysqlhost" -adminUsername "mysqladmin" -adminPassword $secureVMpwd -mySQLPassword $secureVMpwd -allowRemoteConnections "Yes" `
-                                -virtualNetworkName "dbhosting_vnet" -virtualNetworkSubnetName "dbhosting_subnet" -publicIPAddressDomainNameLabel "mysqlhost" `
-                                -vmSize $dbVmSize -managedDiskAccountType "Premium_LRS" -mode Incremental -scriptBaseUrl $scriptBaseURI -Verbose -ErrorAction Stop
+                                -mode Incremental -Verbose -ErrorAction Stop
                         }
                         elseif (!(Get-AzResourceGroupDeployment -ResourceGroupName $rg -Name $deploymentName -ErrorAction SilentlyContinue)) {
                             Write-Host "No previous deployment found - starting deployment of $vmType database host"
                             New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $rg -TemplateUri $mainTemplateURI `
-                                -vmName "mysqlhost" -adminUsername "mysqladmin" -adminPassword $secureVMpwd -mySQLPassword $secureVMpwd -allowRemoteConnections "Yes" `
-                                -virtualNetworkName "dbhosting_vnet" -virtualNetworkSubnetName "dbhosting_subnet" -publicIPAddressDomainNameLabel "mysqlhost" `
-                                -vmSize $dbVmSize -managedDiskAccountType "Premium_LRS" -mode Incremental -scriptBaseUrl $scriptBaseURI -Verbose -ErrorAction Stop
+                                -mode Incremental -Verbose -ErrorAction Stop
                         }
                     }
                     elseif ($vmType -eq "SQLServer") {
@@ -441,9 +437,7 @@ elseif (($skipRP -eq $false) -and ($progressCheck -ne "Complete")) {
                             else {
                                 # Assume MySQL RP was deployed, and DB Hosting RG and networks were previously created
                                 New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $rg -TemplateUri $mainTemplateURI `
-                                    -vmName "sqlhost" -adminUsername "sqladmin" -adminPassword $secureVMpwd -msSQLPassword $secureVMpwd -scriptBaseUrl $scriptBaseURI `
-                                    -virtualNetworkNewOrExisting "existing" -virtualNetworkName "dbhosting_vnet" -virtualNetworkSubnetName "dbhosting_subnet" `
-                                    -publicIPAddressDomainNameLabel "sqlhost" -vmSize $dbVmSize -managedDiskAccountType "Premium_LRS" -mode Incremental -Verbose -ErrorAction Stop
+                                    -mode Incremental -Verbose -ErrorAction Stop
                             }
                         }
                         elseif (!(Get-AzResourceGroupDeployment -ResourceGroupName $rg -Name $deploymentName -ErrorAction SilentlyContinue)) {
@@ -451,16 +445,12 @@ elseif (($skipRP -eq $false) -and ($progressCheck -ne "Complete")) {
                             if ($skipMySQL -eq $true) {
                                 #if MySQL RP was skipped, DB hosting resources should be created here
                                 New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $rg -TemplateUri $mainTemplateURI `
-                                    -vmName "sqlhost" -adminUsername "sqladmin" -adminPassword $secureVMpwd -msSQLPassword $secureVMpwd -scriptBaseUrl $scriptBaseURI `
-                                    -virtualNetworkName "dbhosting_vnet" -virtualNetworkSubnetName "dbhosting_subnet" -publicIPAddressDomainNameLabel "sqlhost" `
-                                    -vmSize $dbVmSize -mode Incremental -Verbose -ErrorAction Stop
+                                    -mode Incremental -Verbose -ErrorAction Stop
                             }
                             else {
                                 # Assume MySQL RP was deployed, and DB Hosting RG and networks were previously created
                                 New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $rg -TemplateUri $mainTemplateURI `
-                                    -vmName "sqlhost" -adminUsername "sqladmin" -adminPassword $secureVMpwd -msSQLPassword $secureVMpwd -scriptBaseUrl $scriptBaseURI `
-                                    -virtualNetworkNewOrExisting "existing" -virtualNetworkName "dbhosting_vnet" -virtualNetworkSubnetName "dbhosting_subnet" `
-                                    -publicIPAddressDomainNameLabel "sqlhost" -vmSize $dbVmSize -managedDiskAccountType "Premium_LRS" -mode Incremental -Verbose -ErrorAction Stop
+                                    -mode Incremental -Verbose -ErrorAction Stop
                             }
                         }
                     }
@@ -483,22 +473,20 @@ elseif (($skipRP -eq $false) -and ($progressCheck -ne "Complete")) {
                             Write-Host "Starting deployment again..."
                             Write-Host "Creating a dedicated Resource Group for all assets"
                             if (-not (Get-AzResourceGroup -Name $rg -Location $azsLocation -ErrorAction SilentlyContinue)) {
-                                New-AzResourceGroup -Name $rg -Location $azsLocation -Force -Confirm:$false -ErrorAction Stop
+                                New-AzResourceGroup -Name $rg -Location $azsLocation -Force -ErrorAction Stop
                             }
-                            New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $rg -vmName "fileserver" -TemplateUri $mainTemplateURI `
-                                -adminPassword $secureVMpwd -fileShareOwnerPassword $secureVMpwd -fileShareUserPassword $secureVMpwd `
-                                -vmExtensionScriptLocation $scriptBaseURI -fileServerVirtualMachineSize $fsVmSize -Mode Incremental -Verbose -ErrorAction Stop
+                            New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $rg -TemplateUri $mainTemplateURI `
+                                -Mode Incremental -Verbose -ErrorAction Stop
                         }
                         elseif (!(Get-AzResourceGroupDeployment -ResourceGroupName $rg -Name $deploymentName -ErrorAction SilentlyContinue)) {
                             Write-Host "No previous deployment found - starting deployment of File Server"
                             Write-Host "Creating a dedicated Resource Group for all File Server assets"
                             if (-not (Get-AzResourceGroup -Name $rg -Location $azsLocation -ErrorAction SilentlyContinue)) {
-                                New-AzResourceGroup -Name $rg -Location $azsLocation -Force -Confirm:$false -ErrorAction Stop
+                                New-AzResourceGroup -Name $rg -Location $azsLocation -Force -ErrorAction Stop
                             }
                             Write-Host "Starting deployment of the File Server for App Service"
-                            New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $rg -vmName "fileserver" -TemplateUri $mainTemplateURI `
-                                -adminPassword $secureVMpwd -fileShareOwnerPassword $secureVMpwd -fileShareUserPassword $secureVMpwd `
-                                -vmExtensionScriptLocation $scriptBaseURI -fileServerVirtualMachineSize $fsVmSize -Mode Incremental -Verbose -ErrorAction Stop
+                            New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $rg -TemplateUri $mainTemplateURI `
+                                -Mode Incremental -Verbose -ErrorAction Stop
                         }
                     }
                     elseif ($vmType -eq "AppServiceDB") {
@@ -520,23 +508,19 @@ elseif (($skipRP -eq $false) -and ($progressCheck -ne "Complete")) {
                             Write-Host "Starting deployment again..."
                             Write-Host "Creating a dedicated Resource Group for all assets"
                             if (-not (Get-AzResourceGroup -Name $rg -Location $azsLocation -ErrorAction SilentlyContinue)) {
-                                New-AzResourceGroup -Name $rg -Location $azsLocation -Force -Confirm:$false -ErrorAction Stop
+                                New-AzResourceGroup -Name $rg -Location $azsLocation -Force -ErrorAction Stop
                             }
-                            New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $rg -TemplateUri $mainTemplateURI -scriptBaseUrl $scriptBaseURI `
-                                -vmName "sqlapp" -adminUsername "sqladmin" -adminPassword $secureVMpwd -msSQLPassword $secureVMpwd `
-                                -publicIPAddressDomainNameLabel "sqlapp" -publicIPAddressName "sqlapp_ip" -vmSize $dbVmSize `
-                                -managedDiskAccountType "Premium_LRS" -mode Incremental -Verbose -ErrorAction Stop
+                            New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $rg -TemplateUri $mainTemplateURI `
+                                -mode Incremental -Verbose -ErrorAction Stop
                         }
                         elseif (!(Get-AzResourceGroupDeployment -ResourceGroupName $rg -Name $deploymentName -ErrorAction SilentlyContinue)) {
                             Write-Host "No previous deployment found - creating a dedicated database host for the App Service"
                             Write-Host "Creating a dedicated Resource Group for all assets"
                             if (-not (Get-AzResourceGroup -Name $rg -Location $azsLocation -ErrorAction SilentlyContinue)) {
-                                New-AzResourceGroup -Name $rg -Location $azsLocation -Force -Confirm:$false -ErrorAction Stop
+                                New-AzResourceGroup -Name $rg -Location $azsLocation -Force -ErrorAction Stop
                             }
-                            New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $rg -TemplateUri $mainTemplateURI -scriptBaseUrl $scriptBaseURI `
-                                -vmName "sqlapp" -adminUsername "sqladmin" -adminPassword $secureVMpwd -msSQLPassword $secureVMpwd `
-                                -publicIPAddressDomainNameLabel "sqlapp" -publicIPAddressName "sqlapp_ip" -vmSize $dbVmSize `
-                                -managedDiskAccountType "Premium_LRS" -mode Incremental -Verbose -ErrorAction Stop
+                            New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $rg -TemplateUri $mainTemplateURI `
+                                -mode Incremental -Verbose -ErrorAction Stop
                         }
                         # Get the FQDN of the VM
                         Write-Host "Getting SQL Server FQDN for use with App Service"
