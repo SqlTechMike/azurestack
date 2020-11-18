@@ -682,7 +682,7 @@ try {
             $azureStackVMs = Get-VM | Where-Object { $_.VMName -like "*Azs*" }
             $azureStackVMs | Format-Table Name, State, @{n = "Memory"; e = { $_.memoryassigned / 1MB } } -AutoSize
             Remove-Variable -Name totalVmMemory -Force -ErrorAction SilentlyContinue
-            $totalVmMemory = $azureStackVMs | Measure-Object memoryassigned –sum
+            $totalVmMemory = $azureStackVMs | Measure-Object memoryassigned ï¿½sum
             $totalVmMemory = [math]::round($totalVmMemory.sum / 1GB)
             [INT]$totalVmMemory = $totalVmMemory
             Write-CustomVerbose -Message "Total physical memory in the ASDK host = $([INT]$totalPhysicalMemory)GB"
@@ -1980,7 +1980,7 @@ try {
                 Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted
                 Get-PSRepository -Name "PSGallery"
                 # For 1910 and later
-                Install-Module -Name AzureRM.BootStrapper
+                Install-Module -Name Az.BootStrapper
                 
                 Use-AzProfile -Profile 2019-03-01-hybrid -Force
                 Install-Module -Name AzureStack -RequiredVersion 2.0.2-preview -AllowPrerelease
@@ -2152,7 +2152,7 @@ try {
                 Write-Host "Adding $ERCSip to the TrustedHosts list."
                 $currentWinRm += ",$ERCSip"
             }
-            Set-item WSMan:\localhost\Client\TrustedHosts –value $currentWinRm -Force -ErrorAction Stop
+            Set-item WSMan:\localhost\Client\TrustedHosts ï¿½value $currentWinRm -Force -ErrorAction Stop
         }
     }
     try {
