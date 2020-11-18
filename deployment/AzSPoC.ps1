@@ -1981,8 +1981,12 @@ try {
                 Get-PSRepository -Name "PSGallery"
                 # For 1910 and later
                 Install-Module -Name AzureRM.BootStrapper
-                Use-AzureRmProfile -Profile 2019-03-01-hybrid -Force
-                Install-Module -Name AzureStack -RequiredVersion 1.8.0 -Force -ErrorAction Stop
+                
+                Use-AzProfile -Profile 2019-03-01-hybrid -Force
+                Install-Module -Name AzureStack -RequiredVersion 2.0.2-preview -AllowPrerelease
+
+                #Use-AzureRmProfile -Profile 2019-03-01-hybrid -Force
+                #Install-Module -Name AzureStack -RequiredVersion 1.8.0 -Force -ErrorAction Stop
                 #Install-Module AzureRM -RequiredVersion 2.5.0 -Force -ErrorAction Stop 
                 # Install the Azure.Storage module version 4.5.0
                 #Install-Module -Name Azure.Storage -RequiredVersion 4.5.0 -Force -AllowClobber -Verbose
