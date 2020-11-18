@@ -314,7 +314,7 @@ elseif (($skipAppService -eq $false) -and ($progressCheck -ne "Complete")) {
                         }
                         $url = "https://main.iam.ad.ext.azure.com/api/RegisteredApplications/$identityApplicationID/Consent?onBehalfOfAll=true"
                         Write-Host "Granting permissions"
-                        $grantPermission = Invoke-RestMethod –Uri $url –Headers $header –Method POST -ErrorAction Stop -Verbose
+                        $grantPermission = Invoke-RestMethod -Uri $url -Headers $header -Method POST -ErrorAction Stop -Verbose
                         Write-Host "Creating text file to record confirmation of granting permissions successfully"
                         New-Item -Path "$AppServicePath\AzureAdPermissions.txt" -ItemType file -Force
                         Write-Output $grantPermission > "$AppServicePath\AzureAdPermissions.txt"
