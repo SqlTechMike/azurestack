@@ -77,7 +77,7 @@ if (($progressCheck -eq "Incomplete") -or ($progressCheck -eq "Failed")) {
             Add-AzAccount -Environment "AzureStackAdmin" -Tenant $tenantID -Credential $azsCreds -ErrorAction Stop | Out-Null
             $sub = Get-AzSubscription | Where-Object { $_.Name -eq "Default Provider Subscription" }
             $azureContext = Get-AzSubscription -SubscriptionID $sub.SubscriptionId | Select-AzSubscription
-            Get-AzsGalleryItem | Where-Object { $_.Name -like "*AzureStackPOC*" } | Remove-AzsGalleryItem -Force -ErrorAction SilentlyContinue
+            Get-AzsGalleryItem | Where-Object { $_.Name -like "*AzureStackPOC*" } | Remove-AzsGalleryItem -ErrorAction SilentlyContinue
         }
         Write-Host "Clearing previous Azure/Azure Stack logins"
         Get-AzContext -ListAvailable | Where-Object { $_.Environment -like "Azure*" } | Remove-AzAccount | Out-Null
@@ -168,7 +168,7 @@ if (($progressCheck -eq "Incomplete") -or ($progressCheck -eq "Failed")) {
                 try {
                     Write-Host "$azpkgPackageName doesn't exist in the gallery. Upload Attempt #$Retries"
                     Write-Host "Uploading $azpkgPackageName from $azpkgPackageURL"
-                    Add-AzsGalleryItem -GalleryItemUri $azpkgPackageURL -Force -Confirm:$false -ErrorAction Stop
+                    Add-AzsGalleryItem -GalleryItemUri $azpkgPackageURL -Confirm:$false -ErrorAction Stop
                 }
                 catch {
                     Write-Host "Upload wasn't successful. Waiting 5 seconds before retrying."

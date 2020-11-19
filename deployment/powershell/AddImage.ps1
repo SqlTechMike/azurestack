@@ -433,9 +433,19 @@ elseif ((!$skip2019Images) -and ($progressCheck -ne "Complete")) {
                     }
                     # Retrieve the access token
                     $token = $null
-                    $tokens = $null
-                    $tokens = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems()
-                    $token = $tokens | Where-Object Resource -EQ $azureEnv.ActiveDirectoryServiceEndpointResourceId | Where-Object TenantId -EQ $azureRegTenantID | Sort-Object ExpiresOn | Select-Object -Last 1 -ErrorAction Stop
+                    #$tokens = $null
+                    #$tokens = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems()
+                    #$token = $tokens | Where-Object Resource -EQ $azureEnv.ActiveDirectoryServiceEndpointResourceId | Where-Object TenantId -EQ $azureRegTenantID | Sort-Object ExpiresOn | Select-Object -Last 1 -ErrorAction Stop
+                    $azContext = Get-AzContext
+                    $token = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.AuthenticationFactory.Authenticate(
+                        $AzContext.'Account',
+                        $AzContext.'Environment',
+                        $AzContext.'Tenant'.'Id',
+                        $null,
+                        [Microsoft.Azure.Commands.Common.Authentication.ShowDialog]::Never,
+                        $null,
+                        'https://management.azure.com/'
+                    )
 
                     # Define variables and create an array to store all information
                     $package = "$onlinePackage"

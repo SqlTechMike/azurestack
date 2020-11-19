@@ -682,7 +682,7 @@ try {
             $azureStackVMs = Get-VM | Where-Object { $_.VMName -like "*Azs*" }
             $azureStackVMs | Format-Table Name, State, @{n = "Memory"; e = { $_.memoryassigned / 1MB } } -AutoSize
             Remove-Variable -Name totalVmMemory -Force -ErrorAction SilentlyContinue
-            $totalVmMemory = $azureStackVMs | Measure-Object memoryassigned �sum
+            $totalVmMemory = $azureStackVMs | Measure-Object memoryassigned -sum
             $totalVmMemory = [math]::round($totalVmMemory.sum / 1GB)
             [INT]$totalVmMemory = $totalVmMemory
             Write-CustomVerbose -Message "Total physical memory in the ASDK host = $([INT]$totalPhysicalMemory)GB"
@@ -803,7 +803,7 @@ try {
     # Validate Github branch exists - usually reserved for testing purposes
     if ($deploymentMode -eq "Online") {
         try {
-            $urlToTest = "https://raw.githubusercontent.com/mattmcspirit/azurestack/$branch/README.md"
+            $urlToTest = "https://raw.githubusercontent.com/SqlTechMike/azurestack/$branch/README.md"
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
             $statusCode = Invoke-WebRequest "$urlToTest" -UseBasicParsing -ErrorAction SilentlyContinue | ForEach-Object { $_.StatusCode } -ErrorAction SilentlyContinue
             if ($statusCode -eq 200) {
@@ -1855,7 +1855,7 @@ try {
             if ($deploymentMode -eq "Online") {
                 # If this is an online deployment, pull down the PowerShell scripts from GitHub
                 foreach ($script in $scriptArray) {
-                    $scriptBaseURI = "https://raw.githubusercontent.com/mattmcspirit/azurestack/$branch/deployment/powershell"
+                    $scriptBaseURI = "https://raw.githubusercontent.com/SqlTechMike/azurestack/$branch/deployment/powershell"
                     $scriptDownloadPath = "$scriptPath\$script"
                     DownloadWithRetry -downloadURI "$scriptBaseURI/$script" -downloadLocation $scriptDownloadPath -retries 10
                 }
@@ -1964,8 +1964,10 @@ try {
 
     if (($progressCheck -eq "Incomplete") -or ($progressCheck -eq "Failed")) {
         try {
-            Import-Module -Name PowerShellGet -ErrorAction Stop
-            Import-Module -Name PackageManagement -ErrorAction Stop
+            Update-Module -Name PowerShellGet -ErrorAction Stop
+            Update-Module -Name PackageManagement -ErrorAction Stop
+            #Import-Module -Name PowerShellGet -ErrorAction Stop
+            #Import-Module -Name PackageManagement -ErrorAction Stop
             Write-CustomVerbose -Message "Uninstalling previously existing Azure Stack modules"
             Uninstall-Module AzureRM.AzureStackAdmin -Force -ErrorAction SilentlyContinue
             Uninstall-Module AzureRM.AzureStackStorage -Force -ErrorAction SilentlyContinue
@@ -1980,10 +1982,10 @@ try {
                 Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted
                 Get-PSRepository -Name "PSGallery"
                 # For 1910 and later
-                Install-Module -Name Az.BootStrapper
+                Install-Module -Name Az.BootStrapper -AllowPrerelease #-Scope CurrentUser
                 
-                Use-AzProfile -Profile 2019-03-01-hybrid -Force
-                Install-Module -Name AzureStack -RequiredVersion 2.0.2-preview -AllowPrerelease
+                Use-AzProfile -Profile 2019-03-01-hybrid -Force #-Scope CurrentUser
+                Install-Module -Name AzureStack -RequiredVersion 2.0.2-preview -AllowPrerelease #-Scope CurrentUser
 
                 #Use-AzureRmProfile -Profile 2019-03-01-hybrid -Force
                 #Install-Module -Name AzureStack -RequiredVersion 1.8.0 -Force -ErrorAction Stop
@@ -1995,7 +1997,7 @@ try {
                 # Remove incompatible storage module installed by AzureRM.Storage
                 #Uninstall-Module Azure.Storage -RequiredVersion 4.6.1 -Force -Verbose
                 #Install the kbupdate module
-                Install-Module -Name kbupdate -Force -ErrorAction Stop
+                Install-Module -Name kbupdate -Force -ErrorAction Stop #-Scope CurrentUser
             }
             elseif ($deploymentMode -ne "Online") {
                 $SourceLocation = "$downloadPath\AzSFiles\PowerShell"
@@ -2152,7 +2154,7 @@ try {
                 Write-Host "Adding $ERCSip to the TrustedHosts list."
                 $currentWinRm += ",$ERCSip"
             }
-            Set-item WSMan:\localhost\Client\TrustedHosts �value $currentWinRm -Force -ErrorAction Stop
+            Set-item WSMan:\localhost\Client\TrustedHosts -value $currentWinRm -Force -ErrorAction Stop
         }
     }
     try {
@@ -2181,8 +2183,8 @@ try {
 
     # Once logins have been successfully tested, increment run counter to track usage
     # This is used to understand how many times the AzSPoC.ps1 script has been run
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    try { Invoke-WebRequest "http://bit.ly/asdkcounter" -UseBasicParsing -DisableKeepAlive | Out-Null } catch { $_.Exception.Response.StatusCode.Value__ }
+    #[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    #try { Invoke-WebRequest "http://bit.ly/asdkcounter" -UseBasicParsing -DisableKeepAlive | Out-Null } catch { $_.Exception.Response.StatusCode.Value__ }
 
     ### DOWNLOAD TOOLS #####################################################################################################################################
     ########################################################################################################################################################
@@ -2197,15 +2199,15 @@ try {
             ### DOWNLOAD & EXTRACT TOOLS ###
             if ($deploymentMode -eq "Online") {
                 # Download the tools archive using a function incase the download fails or is interrupted.
-                $toolsURI = "https://github.com/Azure/AzureStack-Tools/archive/master.zip"
-                $toolsDownloadLocation = "$azsPath\master.zip"
+                $toolsURI = "https://github.com/Azure/AzureStack-Tools/archive/az.zip"
+                $toolsDownloadLocation = "$azsPath\az.zip"
                 Write-CustomVerbose -Message "Downloading Azure Stack Tools to ensure you have the latest versions. This may take a few minutes, depending on your connection speed."
                 Write-CustomVerbose -Message "The download will be stored in $azsPath."
                 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
                 DownloadWithRetry -downloadURI "$toolsURI" -downloadLocation "$toolsDownloadLocation" -retries 10
             }
             elseif ($deploymentMode -ne "Online") {
-                $toolsDownloadLocation = "$azsPath\master.zip"
+                $toolsDownloadLocation = "$azsPath\az.zip"
             }
             # Expand the downloaded files
             Write-CustomVerbose -Message "Expanding Archive"
@@ -2228,7 +2230,7 @@ try {
 
     # Change to the tools directory
     Write-CustomVerbose -Message "Changing Directory"
-    $modulePath = "C:\AzureStack-Tools-master"
+    $modulePath = "C:\AzureStack-Tools-az"
     Get-ChildItem -Path "$modulePath\*" -Recurse | Unblock-File -Verbose
     Set-Location $modulePath
     Disable-AzDataCollection -WarningAction SilentlyContinue
@@ -3423,7 +3425,7 @@ C:\AzSPoC\AzSPoC.ps1, you should find the Scripts folder located at C:\AzSPoC\Sc
                             $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User") 
                             # Set up the VM alias Endpoint for Azure CLI & Python
                             if ($deploymentMode -eq "Online") {
-                                $vmAliasEndpoint = "https://raw.githubusercontent.com/mattmcspirit/azurestack/$branch/deployment/packages/Aliases/aliases.json"
+                                $vmAliasEndpoint = "https://raw.githubusercontent.com/SqlTechMike/azurestack/$branch/deployment/packages/Aliases/aliases.json"
                             }
                             elseif (($deploymentMode -eq "PartialOnline") -or ($deploymentMode -eq "Offline")) {
                                 $item = Get-ChildItem -Path "$azsPath\images" -Recurse -Include ("aliases.json") -ErrorAction Stop
@@ -3727,9 +3729,9 @@ C:\AzSPoC\AzSPoC.ps1, you should find the Scripts folder located at C:\AzSPoC\Sc
         $lnk.IconLocation = "$env:WINDIR\system32\imageres.dll,220"
         $lnk.Save()
     
-        # Increment run counter to track successful run
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-        try { Invoke-WebRequest "http://bit.ly/asdksuccessrun" -UseBasicParsing -DisableKeepAlive | Out-Null } catch { $_.Exception.Response.StatusCode.Value__ }
+        ## Increment run counter to track successful run
+        #[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        #try { Invoke-WebRequest "http://bit.ly/asdksuccessrun" -UseBasicParsing -DisableKeepAlive | Out-Null } catch { $_.Exception.Response.StatusCode.Value__ }
 
         # Final Cleanup
         while (Get-ChildItem -Path "$downloadPath\*" -Include "*.txt", "*.ps1" -ErrorAction SilentlyContinue -Verbose) {
